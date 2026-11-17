@@ -6,7 +6,7 @@ sekadar *blacklist* statis, sehingga bisa menilai tautan yang belum pernah terli
 
 **Teknologi:** Python · scikit-learn · pandas · Streamlit · matplotlib
 
-**Dibuat oleh:** `[Nama Anda]` (pipeline ML & data) dan `[Nama Teman]` (aplikasi & pengujian)
+**Dibuat oleh:** `Ahmad Faris Maulana` (pipeline ML & data) dan `Graciella Vaniaputri Budiono` (aplikasi & pengujian)
 
 ## Latar belakang
 
@@ -106,16 +106,20 @@ Model terlatih sudah disertakan di folder `models/`, jadi langkah 1 hanya perlu 
 - **Threshold bukan 0,5.** Karena False Negative (phishing lolos) lebih berbahaya daripada False Positive, threshold dipilih pada data validasi dengan memaksimalkan F-beta (beta = 1,5) agar recall naik. Nilainya tersimpan di `models/config.json`, dan aplikasi membacanya dari sana. Konsekuensinya lebih banyak URL aman yang ikut ditandai.
 - **Model:** Random Forest dibandingkan dengan Logistic Regression (dan XGBoost bila terpasang) lewat validasi silang. Model dengan F1 terbaik dipilih otomatis. Hasil perbandingan ada di `reports/cv_model_comparison.csv`.
 
-## Hasil
+### Hasil
 
-Isi tabel dari `reports/metrics.json` setelah training penuh:
+Metrik dihitung pada data uji (dipisah per domain, 186.676 URL, 81.948 di antaranya phishing) untuk kelas phishing.
 
 | Threshold | Accuracy | Precision | Recall | F1 | FN | FP |
 |---|---|---|---|---|---|---|
-| 0,50 | | | | | | |
-| `[threshold dari config.json]` | | | | | | |
+| 0,50 | 89,1% | 89,0% | 85,7% | 87,3% | 11.723 | 8.652 |
+| 0,31 (dipakai aplikasi) | 86,2% | 80,0% | 91,5% | 85,4% | 6.939 | 18.750 |
 
-Confusion matrix: `reports/confusion_matrix.png`. Pembahasan kesalahan: `reports/error_analysis.csv`.
+Dengan threshold 0,31, phishing yang lolos turun dari sekitar 14,3% menjadi sekitar 8,5%. Harganya, sekitar 17,9% URL aman ikut ditandai (naik dari 8,3%).
+
+![Confusion matrix](reports/confusion_matrix.png)
+
+Pembahasan kesalahan: `reports/error_analysis.csv`.
 
 ## Keterbatasan
 
