@@ -1,0 +1,97 @@
+{
+  "raw_rows": 835697,
+  "after_dropna": 835697,
+  "conflicting_label_urls_removed": 9,
+  "duplicates_removed": 31651,
+  "clean_rows": 804037,
+  "class_counts": {
+    "0": 433650,
+    "1": 370387
+  },
+  "unique_domains": 329497,
+  "features": [
+    "url_length",
+    "has_ip",
+    "count_at",
+    "count_hyphen",
+    "count_dot",
+    "count_slash",
+    "count_question",
+    "count_equal",
+    "is_shortened",
+    "subdomain_count",
+    "has_sensitive_word",
+    "domain_length",
+    "path_length",
+    "digit_ratio",
+    "host_digit_count",
+    "url_entropy"
+  ],
+  "scheme_share_by_class": {
+    "punya_skema": {
+      "0": 0.094,
+      "1": 0.432
+    },
+    "https": {
+      "0": 0.047,
+      "1": 0.294
+    }
+  },
+  "split": {
+    "train": 617361,
+    "test": 186676,
+    "phishing_share_train": 0.4672128624905039,
+    "phishing_share_test": 0.43898519359746296
+  },
+  "cv_comparison": [
+    {
+      "model": "XGBoost",
+      "accuracy": 0.8832,
+      "precision": 0.8947,
+      "recall": 0.85,
+      "f1": 0.8718,
+      "detik": 65.4
+    },
+    {
+      "model": "RandomForest",
+      "accuracy": 0.8818,
+      "precision": 0.9073,
+      "recall": 0.832,
+      "f1": 0.8681,
+      "detik": 115.5
+    },
+    {
+      "model": "LogisticRegression",
+      "accuracy": 0.7756,
+      "precision": 0.7661,
+      "recall": 0.7479,
+      "f1": 0.7569,
+      "detik": 16.0
+    }
+  ],
+  "selected_model": "XGBoost",
+  "threshold": 0.31,
+  "beta": 1.5,
+  "test_default_threshold": {
+    "threshold": 0.5,
+    "accuracy": 0.8908536716021341,
+    "precision": 0.890310229851541,
+    "recall": 0.8569458681114853,
+    "f1": 0.8733094979014456,
+    "tn": 96076,
+    "fp": 8652,
+    "fn": 11723,
+    "tp": 70225
+  },
+  "test_tuned_threshold": {
+    "threshold": 0.31,
+    "accuracy": 0.862387237780968,
+    "precision": 0.800019198156977,
+    "recall": 0.9153243520281154,
+    "f1": 0.8537963769229456,
+    "tn": 85978,
+    "fp": 18750,
+    "fn": 6939,
+    "tp": 75009
+  }
+}

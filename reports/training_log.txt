@@ -1,0 +1,121 @@
+
+==============================================================
+1. MEMUAT & MEMBERSIHKAN DATA
+==============================================================
+Data mentah            : 835,697 baris
+Setelah buang null     : 835,697
+URL berlabel bertentangan dibuang: 9 baris
+Duplikat (ternormalisasi) dibuang : 31,651 baris
+Data bersih            : 804,037 baris
+Distribusi kelas       : {'0': 433650, '1': 370387}
+
+==============================================================
+3. EKSTRAKSI FITUR
+==============================================================
+16 fitur: ['url_length', 'has_ip', 'count_at', 'count_hyphen', 'count_dot', 'count_slash', 'count_question', 'count_equal', 'is_shortened', 'subdomain_count', 'has_sensitive_word', 'domain_length', 'path_length', 'digit_ratio', 'host_digit_count', 'url_entropy']
+Domain unik: 329,497 dari 804,037 URL
+
+==============================================================
+2. EDA RINGKAS
+==============================================================
+Proporsi URL bersekema per kelas (bukti bias pencatatan data):
+       punya_skema  https
+label                    
+0            0.094  0.047
+1            0.432  0.294
+Gambar & tabel EDA disimpan di reports/
+
+==============================================================
+4. SPLIT DATA (BERDASARKAN DOMAIN)
+==============================================================
+Data latih: 617,361 | Data uji: 186,676
+Domain yang ada di latih & uji sekaligus: 0  (harus 0)
+Proporsi phishing - latih: 0.467 | uji: 0.439
+
+==============================================================
+5. VALIDASI SILANG GroupKFold(5) PADA DATA LATIH
+==============================================================
+  LogisticRegression   selesai (16.0 dtk)
+  RandomForest         selesai (115.5 dtk)
+  XGBoost              selesai (65.4 dtk)
+
+Hasil validasi silang (prediksi out-of-fold, threshold 0.5):
+             model  accuracy  precision  recall     f1  detik
+           XGBoost    0.8832     0.8947  0.8500 0.8718   65.4
+      RandomForest    0.8818     0.9073  0.8320 0.8681  115.5
+LogisticRegression    0.7756     0.7661  0.7479 0.7569   16.0
+
+Model terpilih (F1 validasi silang tertinggi): XGBoost
+
+==============================================================
+THRESHOLD (maksimalkan F1.5 pada prediksi out-of-fold)
+==============================================================
+threshold 0.50 -> precision 0.8947 | recall 0.8500
+threshold 0.31 -> precision 0.8134 | recall 0.9161
+
+==============================================================
+6. MODEL AKHIR & EVALUASI PADA DATA UJI (SEKALI)
+==============================================================
+
+--- Threshold 0.50 ---
+                precision    recall  f1-score   support
+
+Legitimate (0)     0.8913    0.9174    0.9041    104728
+  Phishing (1)     0.8903    0.8569    0.8733     81948
+
+      accuracy                         0.8909    186676
+     macro avg     0.8908    0.8872    0.8887    186676
+  weighted avg     0.8908    0.8909    0.8906    186676
+
+--- Threshold 0.31 (dipakai aplikasi) ---
+                precision    recall  f1-score   support
+
+Legitimate (0)     0.9253    0.8210    0.8700    104728
+  Phishing (1)     0.8000    0.9153    0.8538     81948
+
+      accuracy                         0.8624    186676
+     macro avg     0.8627    0.8681    0.8619    186676
+  weighted avg     0.8703    0.8624    0.8629    186676
+
+Confusion matrix @ 0.50: TN=96,076 FP=8,652 FN=11,723 TP=70,225
+Confusion matrix @ 0.31: TN=85,978 FP=18,750 FN=6,939 TP=75,009
+
+==============================================================
+7. ANALISIS KESALAHAN (threshold aplikasi)
+==============================================================
+
+False Negative (phishing lolos) - skor paling rendah:
+                                                                                                                             url  skor_phishing
+                                                                                  tb3.co/feria-de-canton-fase-i-y-tour-en-china/         0.0022
+                     http://appertua.com/economia/La-alternativa-que-existe-al-blanqueo-de-la-que-nadie-habla-20160630-0014.html         0.0026
+                                             patrickhickey.eu/concertina-free-short-skits-scripts-in-hindi-for-independence-day/         0.0028
+                                                                                   blog.turbotax.ca/do-good-and-get-a-deduction/         0.0032
+                                                                            www.facebook.com/Great-Golden-Empire-Travel-and-Tour         0.0033
+circleofdocs.com/hpv-vaccine-american-college-of-pediatrics-issues-rare-warning-against-vaccine-due-to-premature-ovarian-failure         0.0034
+                                             www.tractorbynet.com/forums/rural-living/169575-winter-vs-spring-felling-trees.html         0.0041
+                                                     http://modernlywed.com/2011/08/18/real-wedding-brooke-cameron-in-california         0.0042
+                                                 safety.amw.com/family/ask-john-walsh-how-can-i-tell-if-a-child-has-been-abused/         0.0044
+                                                                    safety.amw.com/home/stop-domestic-violence-before-it-starts/         0.0044
+
+False Positive (URL aman ditandai phishing) - skor paling tinggi:
+                                                                                                                  url  skor_phishing
+                                                                                                http://xian.95191.com         0.9994
+                                                                                        https://www.living-puppets.de         0.9990
+   broadcasting-history.ca/index3.html?url=http%3A//www.broadcasting-history.ca/networks/networks_TVA_Television.html         0.9990
+   broadcasting-history.ca/index3.html?url=http%3A//www.broadcasting-history.ca/networks/networks_TQS_Television.html         0.9990
+                                                                                                    http://mp3sayt.az         0.9988
+                                                                                                 http://e-handball.gr         0.9987
+broadcasting-history.ca/index3.html?url=http%3A//www.broadcasting-history.ca/sportsonradioandtv/CFL_The_TV_Years.html         0.9987
+                                                                                http://andypfvk704blog.total-blog.com         0.9987
+                                                                                   http://sahih-al-islam.blogspot.com         0.9986
+        broadcasting-history.ca/index3.html?url=http%3A//www.broadcasting-history.ca/networks/networks_CBC_Radio.html         0.9986
+
+==============================================================
+8. MENYIMPAN ARTEFAK
+==============================================================
+Model   : models/phishing_model.pkl
+Scaler  : models/scaler.pkl
+Config  : models/config.json  (threshold = 0.31)
+Laporan : reports/  (confusion_matrix.png, metrics.json, error_analysis.csv, ...)
+
+Selesai dalam 264 detik.

@@ -1,0 +1,19 @@
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Dataset mentah (unduh dari Hugging Face, lihat README)
+urls.json
+
+# Large raw datasets (jika file > 50 MB)
+data/*.json
+data/*.csv

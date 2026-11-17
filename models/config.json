@@ -1,0 +1,22 @@
+{
+  "model_name": "XGBoost",
+  "threshold": 0.31,
+  "feature_names": [
+    "url_length",
+    "has_ip",
+    "count_at",
+    "count_hyphen",
+    "count_dot",
+    "count_slash",
+    "count_question",
+    "count_equal",
+    "is_shortened",
+    "subdomain_count",
+    "has_sensitive_word",
+    "domain_length",
+    "path_length",
+    "digit_ratio",
+    "host_digit_count",
+    "url_entropy"
+  ]
+}
