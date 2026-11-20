@@ -132,8 +132,9 @@ Pembahasan kesalahan: `reports/error_analysis.csv`.
 ## Penggunaan bantuan AI
 
 Bantuan AI (Claude, Anthropic) digunakan untuk meninjau rancangan fitur dan pipeline, menemukan masalah
-pada versi awal (bias skema URL, kebocoran domain antar split), dan menyusun ulang `utils.py` serta
-`train_model.py`. Kode telah dijalankan dan dipahami oleh anggota tim. `[Sesuaikan dengan penggunaan sebenarnya, termasuk untuk app.py dan laporan.]`
+pada versi awal (bias skema URL, kebocoran domain antar split), menyusun ulang `utils.py` dan
+`train_model.py`, serta menyusun blok integrasi model pada `app.py`. Antarmuka (tampilan dan CSS) dibuat
+oleh anggota tim. Seluruh kode telah dijalankan, diuji, dan dipahami oleh anggota tim.
 
 ## Referensi
 

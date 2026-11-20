@@ -1,7 +1,18 @@
 
 import streamlit as st
 import re
-from urllib.parse import urlparse
+from pathlib import Path
+import json
+
+import joblib
+import pandas as pd
+
+from utils import (
+    FEATURE_NAMES,
+    extract_url_features,
+    features_as_dict,
+    validate_url_input,
+)
 
 # PAGE CONFIG
 
@@ -62,8 +73,6 @@ div[data-testid="stFormSubmitButton"] button {
 div[data-testid="stFormSubmitButton"] button:hover {
     background-color: #10695F !important;
 }
-
-</style>
 
 </style>
 """, unsafe_allow_html=True)
@@ -203,16 +212,6 @@ footer {
 }
 
 /* Button */
- {
-    background: #147F73;
-    color: white;
-    border: none;
-    border-radius: 10px;
-    min-height: 46px;
-    font-weight: 600;
-    transition: 0.2s;
-}
-
 
 .stButton button,
 .stFormSubmitButton button {
@@ -413,80 +412,130 @@ with st.form("url_analysis_form"):
 
     submitted = st.form_submit_button(
         "Analyze URL  →",
-        use_container_width=True
+        width="stretch"
     )
 
-# URL VALIDATION
+# MODEL
 
-def is_valid_url(url):
-    try:
-        url = url.strip()
+BASE_DIR = Path(__file__).parent
 
-        if not url:
-            return False
 
-        if not re.match(r"^https?://", url, re.IGNORECASE):
-            url = "https://" + url
+@st.cache_resource
+def load_artifacts():
+    model = joblib.load(BASE_DIR / "models" / "phishing_model.pkl")
+    scaler = joblib.load(BASE_DIR / "models" / "scaler.pkl")
+    with open(BASE_DIR / "models" / "config.json") as f:
+        config = json.load(f)
+    return model, scaler, config
 
-        parsed = urlparse(url)
 
-        return (
-            parsed.scheme in ["http", "https"]
-            and bool(parsed.hostname)
-            and "." in parsed.hostname
-            and " " not in parsed.hostname
-        )
+def predict_url(url):
+    """Return (risk score 0-1, is_phishing, threshold)."""
+    model, scaler, config = load_artifacts()
+    x = pd.DataFrame([extract_url_features(url)], columns=FEATURE_NAMES)
+    risk = float(model.predict_proba(scaler.transform(x))[0, 1])
+    return risk, risk >= config["threshold"], config["threshold"]
 
-    except Exception:
-        return False
+
+def notable_characteristics(url):
+    """Simple rules that point out suspicious traits of the URL (not model internals)."""
+    f = features_as_dict(url)
+    notes = []
+    if f["has_ip"]:
+        notes.append("The address uses an IP address instead of a domain name.")
+    if f["is_shortened"]:
+        notes.append("The link uses a URL shortener, which hides the real destination.")
+    if f["count_at"] > 0:
+        notes.append("The URL contains an '@' character, which can disguise the real host.")
+    if f["has_sensitive_word"]:
+        notes.append("The URL contains sensitive words such as login, verify, account, or secure.")
+    if f["subdomain_count"] >= 3:
+        notes.append("The URL has many subdomains, a common trick to imitate trusted sites.")
+    if f["count_hyphen"] >= 3:
+        notes.append("The URL contains many hyphens.")
+    if f["url_length"] > 75:
+        notes.append("The URL is unusually long.")
+    return notes
 
 
 # RESULT AREA
 
 if submitted:
-    if not input_url.strip():
-        st.warning("Please enter a URL first.")
+    valid, message = validate_url_input(input_url)
 
-    elif not is_valid_url(input_url):
-        st.error("Invalid URL. Please enter a valid website address.")
+    if not valid:
+        st.error(message)
 
     else:
+        try:
+            risk, is_phishing, threshold = predict_url(input_url)
+        except FileNotFoundError:
+            st.error("Model files not found. Run `python train_model.py` first.")
+            st.stop()
+
         st.markdown("""
         <div class="result-card">
-            <div class="result-header">
-                <div>
-                    <div class="result-title">Analysis Result</div>
-                    <div class="result-subtitle">
-                        URL submitted successfully
-                    </div>
-                </div>
-            </div>
-            <span class="status-badge">
-                URL FORMAT VALID
-            </span>
+            <div class="result-title">Analysis Result</div>
+            <div class="result-subtitle">Prediction from the trained model</div>
         </div>
         """, unsafe_allow_html=True)
 
         st.code(input_url)
 
         col1, col2 = st.columns(2)
-
         with col1:
-            st.metric(
-                label="Risk Score",
-                value="—"
-            )
-
+            st.metric(label="Risk Score", value=f"{risk:.0%}")
         with col2:
             st.metric(
                 label="Threat Status",
-                value="Pending"
+                value="PHISHING" if is_phishing else "SAFE",
+            )
+        st.progress(min(max(risk, 0.0), 1.0))
+
+        notes = notable_characteristics(input_url)
+
+        if is_phishing:
+            st.error(
+                "This URL is classified as **phishing**. "
+                "Do not open it or enter any credentials."
+            )
+            st.markdown("**Recommended actions**")
+            st.markdown(
+                "- Do not click the link or enter a username, password, PIN, or OTP.\n"
+                "- Open the official website by typing its address yourself.\n"
+                "- If you already entered credentials, change your password immediately.\n"
+                "- Report the link to the impersonated service or your IT/security team."
+            )
+        else:
+            st.success(
+                "This URL is classified as **safe** by the model. "
+                "No strong phishing pattern was found."
+            )
+            st.markdown("**Recommended actions**")
+            st.markdown(
+                "- Stay alert: the model only checks the URL text, not the page content.\n"
+                "- Check that the domain matches the service you intend to visit.\n"
+                "- Never share OTP or passwords through links you received unexpectedly."
             )
 
-        st.info(
-            "The URL format is valid. However, the machine learning "
-            "model has not been connected yet, so the phishing "
-            "prediction is not available."
+        if notes:
+            st.markdown("**Notable URL characteristics**")
+            for note in notes:
+                st.markdown(f"- {note}")
+
+        with st.expander("Extracted features"):
+            st.dataframe(
+                pd.DataFrame(
+                    list(features_as_dict(input_url).items()),
+                    columns=["Feature", "Value"],
+                ),
+                hide_index=True,
+            )
+
+        st.caption(
+            f"The risk score is the model's estimated probability. "
+            f"URLs with a score of {threshold:.0%} or higher are flagged as phishing. "
+            "This is an estimate, not a guarantee."
         )
 
 # INFORMATION CARDS
@@ -517,8 +566,8 @@ with col2:
             Risk Assessment
         </div>
         <div class="panel-description" style="margin-bottom:0;">
-            Display model-based risk scores
-            after the ML model is integrated.
+            Display a model-based risk score
+            for every analyzed URL.
         </div>
     </div>
     """, unsafe_allow_html=True)
