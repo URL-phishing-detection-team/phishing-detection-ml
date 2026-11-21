@@ -337,6 +337,12 @@ def main():
     # --- simpan --------------------------------------------------------------------
     banner("8. MENYIMPAN ARTEFAK")
     joblib.dump(model, os.path.join(args.modeldir, "phishing_model.pkl"))
+    json_path = os.path.join(args.modeldir, "phishing_model.json")
+    if hasattr(model, "save_model"):
+        model.save_model(json_path)
+    elif os.path.exists(json_path):
+        os.remove(json_path)
+
     joblib.dump(scaler, os.path.join(args.modeldir, "scaler.pkl"))
     with open(os.path.join(args.modeldir, "config.json"), "w") as f:
         json.dump({"model_name": best_name, "threshold": threshold,

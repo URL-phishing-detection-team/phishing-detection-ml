@@ -422,7 +422,13 @@ BASE_DIR = Path(__file__).parent
 
 @st.cache_resource
 def load_artifacts():
-    model = joblib.load(BASE_DIR / "models" / "phishing_model.pkl")
+    json_path = BASE_DIR / "models" / "phishing_model.json"
+    if json_path.exists():
+        from xgboost import XGBClassifier
+        model = XGBClassifier()
+        model.load_model(str(json_path))
+    else:
+        model = joblib.load(BASE_DIR / "models" / "phishing_model.pkl")
     scaler = joblib.load(BASE_DIR / "models" / "scaler.pkl")
     with open(BASE_DIR / "models" / "config.json") as f:
         config = json.load(f)
